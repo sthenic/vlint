@@ -1,0 +1,35 @@
+usage:
+  vlint [OPTIONS] ARGUMENTS
+
+
+arguments:
+  file [file [file ...]]    Input file(s) to parse. To parse several files,
+                            separate them by whitespace.
+
+                            Pattern matching is supported but the extent of this
+                            support is OS-dependent. The "*.ext" notation is
+                            always supported. The glob call is used on POSIX
+                            systems.
+
+
+options:
+  -h, --help                Print this help message and exit.
+  -v, --version             Print the version information and exit.
+
+  -I:PATH,                  Add PATH to the list of include paths searched when
+                            an `include directive is encountered.
+
+  -D:DEFINE                 Add DEFINE as a global macro, as if it had been
+                            added with the `define compiler directive. The input
+                            is split at the first equals sign (=) where the
+                            head constitutes the macro name (and an optional
+                            parameter list) and the tail constitutes the macro's
+                            replacement list.
+
+                            Use double quotes (") to include whitespace in the
+                            replacement list.
+
+                            For example:
+                              -D:FOO
+                              -D:WIDTH=8
+                              -D:"ONES(x) = {(x){1'b1}}"
