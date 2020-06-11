@@ -5,8 +5,7 @@ import terminal
 import vparse
 import vltoml
 
-import ./log
-import ./cli
+import ./utils/[log, cli]
 
 const
    # Version information
