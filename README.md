@@ -1,9 +1,9 @@
-[![NIM](https://img.shields.io/badge/Nim-1.2.0-orange.svg?style=flat-square)](https://nim-lang.org)
+[![NIM](https://img.shields.io/badge/Nim-1.2.6-orange.svg?style=flat-square)](https://nim-lang.org)
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 # vlint
 
-This tool is linter for Verilog IEEE 1364-2005 written in [Nim](https://nim-lang.org). The parsing is handled by [vparse](https://github.com/sthenic/vparse).
+This tool is linter for Verilog IEEE 1364-2005 written in [Nim](https://nim-lang.org). The parsing is handled by [`vparse`](https://github.com/sthenic/vparse).
 
 ## Configuration
 
@@ -21,7 +21,7 @@ This tool is free software released under the [MIT license](https://opensource.o
 ## Third-party dependencies
 
 * [Nim's standard library](https://github.com/nim-lang/Nim)
-* [vparse](https://github.com/sthenic/vparse)
+* [`vparse`](https://github.com/sthenic/vparse)
 
 ## Author
 `vls` is maintained by [Marcus Eriksson](mailto:marcus.jr.eriksson@gmail.com).
