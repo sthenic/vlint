@@ -16,7 +16,7 @@ options:
   -h, --help                Print this help message and exit.
   -v, --version             Print the version information and exit.
 
-  -I:PATH,                  Add PATH to the list of include paths searched when
+  -I:PATH                   Add PATH to the list of include paths searched when
                             an `include directive is encountered.
 
   -D:DEFINE                 Add DEFINE as a global macro, as if it had been
