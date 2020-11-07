@@ -9,6 +9,6 @@ install_ext = @["nim"]
 skip_dirs = @["tests"]
 
 # Dependencies
-requires "nim >= 1.2.6"
+requires "nim >= 1.4.0"
 requires "vparse >= 0.1.1"
 requires "vltoml >= 0.1.0"
