@@ -77,7 +77,6 @@ for filename in cli_state.input_files:
       except ConfigurationParseError as e:
          log.error("Failed to parse configuration file '$1'.", e.msg)
 
-
    # Prepare the parse.
    set_len(include_paths, 0)
    set_len(defines, 0)
@@ -86,24 +85,22 @@ for filename in cli_state.input_files:
    add(defines, configuration.defines)
    add(defines, cli_state.defines)
    let cache = new_ident_cache()
+   let graph = new_graph(cache)
    log.info("Parsing source file '$1'", filename)
    let t_start = cpu_time()
-   open_graph(g, cache, fs, filename, include_paths, defines)
+   let root = parse(graph, fs, filename, include_paths, defines)
    let t_diff_ms = (cpu_time() - t_start) * 1000
-   let root_node = parse_all(g)
+   close(fs)
 
    log.info("Parse completed in ", fgGreen, styleBright,
             format_float(t_diff_ms, ffDecimal, 1), " ms", resetStyle, ".")
 
    # Analyze the AST.
-   if has_errors(root_node):
+   if has_errors(root):
       log.error("The AST contains errors.\n")
-      write_errors(stdout, root_node)
+      write_errors(stdout, root)
       exit_val = EPARSE
    else:
       log.info("No errors.\n")
-
-   close_graph(g)
-   close(fs)
 
 quit(exit_val)
