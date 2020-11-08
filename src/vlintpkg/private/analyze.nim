@@ -6,7 +6,7 @@ import vparse
 
 type
    ConnectionErrorKind* = enum
-      CkUnlisted,
+      CkMissing,
       CkUnconnected
 
    ConnectionError* = object
@@ -95,7 +95,7 @@ proc find_unconnected_ports(g: Graph, module, instance: PNode): seq[ConnectionEr
          add(result, new_connection_error(CkUnconnected, instance, id.identifier, connection))
 
 
-proc find_unlisted_ports(g: Graph, module, instance: PNode): seq[ConnectionError] =
+proc find_missing_ports(g: Graph, module, instance: PNode): seq[ConnectionError] =
    ## For a given ``instance`` (``NkModuleInstance``) of a ``module``
    ## (``NkModuleDecl``), find any unlisted port connections, i.e. where the
    ## instance is not providing a value for a named port.
@@ -112,7 +112,7 @@ proc find_unlisted_ports(g: Graph, module, instance: PNode): seq[ConnectionError
    if named_connections:
       for port, id in walk_named_ports(module):
          if id.identifier notin connections:
-            add(result, new_connection_error(CkUnlisted, instance, id.identifier, port))
+            add(result, new_connection_error(CkMissing, instance, id.identifier, port))
 
 
 proc find_connection_errors*(g: Graph): seq[ConnectionError] =
@@ -131,5 +131,5 @@ proc find_connection_errors*(g: Graph): seq[ConnectionError] =
             continue
 
          for instance in walk_sons(instantiation, NkModuleInstance):
-            add(result, find_unlisted_ports(g, module, instance))
+            add(result, find_missing_ports(g, module, instance))
             add(result, find_unconnected_ports(g, module, instance))
