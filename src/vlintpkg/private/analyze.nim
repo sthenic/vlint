@@ -22,14 +22,16 @@ proc write_errors*(f: File, n: PNode) =
          write_errors(f, n.sons[i])
 
 
-proc find_undeclared_identifiers*(g: Graph): seq[PNode] =
+proc find_undeclared_identifiers*(g: Graph): tuple[internal: seq[PNode], external: seq[PNode]] =
    ## Traverse the AST downwards starting from ``n``, searching for undeclared
-   ## identifiers. The proc returns a sequence of identifier nodes whose
-   ## declaration is missing.
-   # A rather naive approach is to walk over all identifiers and attempt to find
-   # a declaration in its context. Though we have to filter out external
-   # identifiers and handle them separately since the find_declaration proc only
-   # navigates the local AST.
+   ## identifiers. The proc returns a tuple of sequences containing identifier
+   ## nodes whose declaration is missing. The result is split into internal and
+   ## external identifiers. Missing external identifiers is often an issue with
+   ## the include paths used when the module graph ``g`` is parsed.
+   # A rather naive, but straight-forward approach is to walk over all
+   # identifiers and attempt to find a declaration in its context. Though we
+   # have to filter out external identifiers and handle them separately since
+   # the find_declaration proc only navigates the local AST.
    for (id, context) in walk_identifiers(g.root, recursive = true):
       if OpChars in id.identifier.s or id.kind == NkAttributeName or context[^1].n.kind == NkPort:
          continue
@@ -37,8 +39,8 @@ proc find_undeclared_identifiers*(g: Graph): seq[PNode] =
       if is_external_identifier(context):
          let (d, _, _) = find_external_declaration(g, context, id.identifier)
          if is_nil(d):
-            add(result, id)
+            add(result.external, id)
       else:
          let (d, _, _, _) = find_declaration(context, id.identifier)
          if is_nil(d):
-            add(result, id)
+            add(result.internal, id)
