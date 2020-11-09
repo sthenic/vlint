@@ -35,6 +35,14 @@ proc write_errors*(f: File, n: PNode) =
          write_errors(f, n.sons[i])
 
 
+proc ignore_identifier(id: PNode, context: AstContext): bool =
+   result =
+      OpChars in id.identifier.s or
+      id.kind == NkAttributeName or
+      context[^1].n.kind in {NkPort, NkGenerateBlock, NkParBlock, NkSeqBlock} or
+      (context[^1].n.kind == NkSystemTaskEnable and context[^1].pos == find_first_index(context[^1].n, NkIdentifier))
+
+
 proc find_undeclared_identifiers*(g: Graph): tuple[internal: seq[PNode], external: seq[PNode]] =
    ## Traverse the AST downwards starting from ``n``, searching for undeclared
    ## identifiers. The proc returns a tuple of sequences containing identifier
@@ -44,10 +52,9 @@ proc find_undeclared_identifiers*(g: Graph): tuple[internal: seq[PNode], externa
    # A rather naive, but straight-forward approach is to walk over all
    # identifiers and attempt to find a declaration in its context. Though we
    # have to filter out external identifiers and handle them separately since
-   # the find_declaration proc only navigates the local AST.
+   # find_declaration() only navigates the local AST.
    for (id, context) in walk_identifiers(g.root, recursive = true):
-      if OpChars in id.identifier.s or id.kind == NkAttributeName or
-            context[^1].n.kind in {NkPort, NkGenerateBlock, NkParBlock, NkSeqBlock}:
+      if ignore_identifier(id, context):
          continue
 
       if is_external_identifier(context):
