@@ -46,7 +46,8 @@ proc find_undeclared_identifiers*(g: Graph): tuple[internal: seq[PNode], externa
    # have to filter out external identifiers and handle them separately since
    # the find_declaration proc only navigates the local AST.
    for (id, context) in walk_identifiers(g.root, recursive = true):
-      if OpChars in id.identifier.s or id.kind == NkAttributeName or context[^1].n.kind == NkPort:
+      if OpChars in id.identifier.s or id.kind == NkAttributeName or
+            context[^1].n.kind in {NkPort, NkGenerateBlock, NkParBlock, NkSeqBlock}:
          continue
 
       if is_external_identifier(context):
