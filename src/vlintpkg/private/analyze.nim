@@ -108,7 +108,7 @@ proc find_missing_ports(g: Graph, module, instance: PNode): seq[ConnectionError]
    ## (``NkModuleDecl``), find any unlisted port connections, i.e. where the
    ## instance is not providing a value for a named port.
    var connections: seq[PIdentifier]
-   var named_connections = is_nil(find_first(instance, NkOrderedPortConnection))
+   let named_connections = is_nil(find_first(instance, NkOrderedPortConnection))
    for connection in walk_sons(instance, NkNamedPortConnection):
       let id = find_first(connection, NkIdentifier)
       if not is_nil(id):
@@ -117,7 +117,7 @@ proc find_missing_ports(g: Graph, module, instance: PNode): seq[ConnectionError]
    # Only check against the named module ports if the instance is using named
    # port connections.
    if named_connections:
-      for port, id in walk_named_ports(module):
+      for port, id in walk_ports(module):
          if id.identifier notin connections:
             add(result, new_connection_error(CkMissing, instance, id.identifier, port))
 
