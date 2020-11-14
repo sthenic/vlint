@@ -56,8 +56,9 @@ if len(cli_state.input_files) == 0:
    log.error("No input files, aborting.")
    quit(EINVAL)
 
-var g: Graph
 var exit_val = ESUCCESS
+let module_cache = new_module_cache()
+let locations = new_locations()
 var include_paths = new_seq_of_cap[string](32)
 var defines = new_seq_of_cap[string](32)
 for filename in cli_state.input_files:
@@ -85,7 +86,7 @@ for filename in cli_state.input_files:
    add(defines, configuration.defines)
    add(defines, cli_state.defines)
    let cache = new_ident_cache()
-   let graph = new_graph(cache)
+   let graph = new_graph(cache, module_cache, locations)
    log.info("Parsing source file '$1'", filename)
    let t_start = cpu_time()
    let root = parse(graph, fs, filename, include_paths, defines)
@@ -102,5 +103,17 @@ for filename in cli_state.input_files:
       exit_val = EPARSE
    else:
       log.info("No errors.\n")
+
+   let (internal, external) = find_undeclared_identifiers(graph)
+   for id in internal & external:
+      log.info("'$1' is undeclared.", id.identifier.s)
+
+   for error in find_connection_errors(graph):
+      case error.kind
+      of CkMissing:
+         log.info("Missing port '$1'.", error.identifier.s)
+      of CkUnconnected:
+         log.info("'$1' is unconnected.", error.identifier.s)
+
 
 quit(exit_val)
