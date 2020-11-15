@@ -104,9 +104,10 @@ for filename in cli_state.input_files:
    else:
       log.info("No errors.\n")
 
-   let (internal, external) = find_undeclared_identifiers(graph)
-   for id in internal & external:
-      log.info("'$1' is undeclared.", id.identifier.s)
+   let undeclared_identifiers = find_undeclared_identifiers(graph)
+   for id in undeclared_identifiers:
+      log.info("'$1' is undeclared ($2).", id.identifier.identifier.s, $id.kind)
+      log.info("meta: $1", if is_nil(id.meta): "nil" else: pretty(id.meta))
 
    for error in find_connection_errors(graph):
       case error.kind

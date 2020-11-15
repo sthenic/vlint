@@ -5,6 +5,17 @@ import vparse
 
 
 type
+   UndeclaredIdentifierKind* = enum
+      UkModule,
+      UkModuleParameterPort,
+      UkModulePort,
+      UkInternal
+
+   UndeclaredIdentifier* = object
+      kind*: UndeclaredIdentifierKind
+      identifier*: PNode
+      meta*: PNode
+
    ConnectionErrorKind* = enum
       CkMissing,
       CkUnconnected
@@ -43,11 +54,30 @@ proc ignore_identifier(id: PNode, context: AstContext): bool =
       (context[^1].n.kind == NkSystemTaskEnable and context[^1].pos == find_first_index(context[^1].n, NkIdentifier))
 
 
-proc find_undeclared_identifiers*(g: Graph): tuple[internal: seq[PNode], external: seq[PNode]] =
+proc new_undeclared_identifier(kind: UndeclaredIdentifierKind, identifier, meta: PNode): UndeclaredIdentifier =
+   result.kind = kind
+   result.identifier = identifier
+   result.meta = meta
+
+
+proc new_undeclared_identifier(kind: NodeKind, identifier, meta: PNode): UndeclaredIdentifier =
+   let ukind = case kind
+   of NkModuleInstantiation:
+      UkModule
+   of NkNamedPortConnection:
+      UkModulePort
+   of NkNamedParameterAssignment:
+      UkModuleParameterPort
+   else:
+      UkInternal
+   result = new_undeclared_identifier(ukind, identifier, meta)
+
+
+proc find_undeclared_identifiers*(g: Graph): seq[UndeclaredIdentifier] =
    ## Traverse the AST downwards starting from ``n``, searching for undeclared
-   ## identifiers. The proc returns a tuple of sequences containing identifier
-   ## nodes whose declaration is missing. The result is split into internal and
-   ## external identifiers. Missing external identifiers is often an issue with
+   ## identifiers. The proc returns a sequences containing
+   ## ``UndeclaredIdentifier`` objects representing each identifier node whose
+   ## declaration is missing. Missing external identifiers is often an issue with
    ## the include paths used when the module graph ``g`` is parsed.
    # A rather naive, but straight-forward approach is to walk over all
    # identifiers and attempt to find a declaration in its context. Though we
@@ -57,14 +87,15 @@ proc find_undeclared_identifiers*(g: Graph): tuple[internal: seq[PNode], externa
       if ignore_identifier(id, context):
          continue
 
-      if is_external_identifier(context):
+      let (is_external, kind) = check_external_identifier(context)
+      if is_external:
          let (d, _, _) = find_external_declaration(g, context, id.identifier)
          if is_nil(d):
-            add(result.external, id)
+            add(result, new_undeclared_identifier(kind, id, get_module_name_from_connection(context)))
       else:
          let (d, _, _, _) = find_declaration(context, id.identifier)
          if is_nil(d):
-            add(result.internal, id)
+            add(result, new_undeclared_identifier(UkInternal, id, nil))
 
 
 proc new_connection_error(kind: ConnectionErrorKind, instance: PNode,
