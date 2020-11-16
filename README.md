@@ -22,6 +22,7 @@ This tool is free software released under the [MIT license](https://opensource.o
 
 * [Nim's standard library](https://github.com/nim-lang/Nim)
 * [`vparse`](https://github.com/sthenic/vparse)
+* [`vltoml`](https://github.com/sthenic/vltoml)
 
 ## Author
 `vls` is maintained by [Marcus Eriksson](mailto:marcus.jr.eriksson@gmail.com).
