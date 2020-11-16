@@ -51,7 +51,8 @@ proc ignore_identifier(id: PNode, context: AstContext): bool =
       OpChars in id.identifier.s or
       id.kind == NkAttributeName or
       context[^1].n.kind in {NkPort, NkGenerateBlock, NkParBlock, NkSeqBlock} or
-      (context[^1].n.kind == NkSystemTaskEnable and context[^1].pos == find_first_index(context[^1].n, NkIdentifier))
+      (context[^1].n.kind in {NkSystemTaskEnable, NkConstantSystemFunctionCall} and
+         context[^1].pos == find_first_index(context[^1].n, NkIdentifier))
 
 
 proc new_undeclared_identifier(kind: UndeclaredIdentifierKind, identifier, meta: PNode): UndeclaredIdentifier =
