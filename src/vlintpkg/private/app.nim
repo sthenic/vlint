@@ -111,10 +111,14 @@ for filename in cli_state.input_files:
 
    for error in find_connection_errors(graph):
       case error.kind
-      of CkMissing:
+      of CkMissingPort:
          log.info("Missing port '$1'.", error.identifier.s)
-      of CkUnconnected:
-         log.info("'$1' is unconnected.", error.identifier.s)
+      of CkUnconnectedPort:
+         log.info("Input port '$1' is unconnected.", error.identifier.s)
+      of CkMissingParameter:
+         log.info("Missing parameter assignment '$1'.", error.identifier.s)
+      of CkUnassignedParameter:
+         log.info("Parameter '$1' is unassigned.", error.identifier.s)
 
 
 quit(exit_val)

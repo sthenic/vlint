@@ -17,8 +17,10 @@ type
       meta*: PNode
 
    ConnectionErrorKind* = enum
-      CkMissing,
-      CkUnconnected
+      CkMissingPort,
+      CkMissingParameter,
+      CkUnconnectedPort,
+      CkUnassignedParameter
 
    ConnectionError* = object
       kind*: ConnectionErrorKind
@@ -132,13 +134,14 @@ proc find_unconnected_ports(g: Graph, module, instance: PNode): seq[ConnectionEr
       #        to make find_module_port_declaration return the internal NkPortDecl.
       let direction = find_first(declaration, NkDirection)
       if not is_nil(direction) and direction.identifier.s == "input":
-         add(result, new_connection_error(CkUnconnected, instance, id.identifier, connection))
+         add(result, new_connection_error(CkUnconnectedPort, instance, id.identifier, connection))
 
 
 proc find_missing_ports(g: Graph, module, instance: PNode): seq[ConnectionError] =
    ## For a given ``instance`` (``NkModuleInstance``) of a ``module``
    ## (``NkModuleDecl``), find any unlisted port connections, i.e. where the
    ## instance is not providing a value for a named port.
+   # TODO: Support unordered connections, ensuring correct number etc.
    var connections: seq[string]
    let named_connections = is_nil(find_first(instance, NkOrderedPortConnection))
    for connection in walk_sons(instance, NkNamedPortConnection):
@@ -151,7 +154,50 @@ proc find_missing_ports(g: Graph, module, instance: PNode): seq[ConnectionError]
    if named_connections:
       for port, id in walk_ports(module):
          if id.identifier.s notin connections:
-            add(result, new_connection_error(CkMissing, instance, id.identifier, port))
+            add(result, new_connection_error(CkMissingPort, instance, id.identifier, port))
+
+
+proc find_missing_parameters*(g: Graph, module, instantiation: PNode): seq[ConnectionError] =
+   ## For a given module ``instantiation`` (``NkModuleInstantiation``) of a
+   ## ``module`` (``NkModuleDecl``), find any unlisted parameter assignments.
+   # TODO: Support unordered assignments, ensuring correct number etc.
+   let parameter_assignments = find_first(instantiation, NkParameterValueAssignment)
+   if is_nil(parameter_assignments):
+      for parameter, id in walk_parameters(module):
+         add(result, new_connection_error(CkMissingParameter, instantiation, id.identifier,
+                                          parameter))
+   else:
+      var assignments: seq[string]
+      let named_assignments = is_nil(find_first(parameter_assignments, NkOrderedParameterAssignment))
+      for connection in walk_sons(parameter_assignments, NkNamedParameterAssignment):
+         let id = find_first(connection, NkIdentifier)
+         if not is_nil(id):
+            add(assignments, id.identifier.s)
+
+      if named_assignments:
+         for parameter, id in walk_parameters(module):
+            if id.identifier.s notin assignments:
+               add(result, new_connection_error(CkMissingParameter, instantiation, id.identifier,
+                                                parameter))
+
+
+proc find_unassigned_parameters*(g: Graph, module, instantiation: PNode): seq[ConnectionError] =
+   ## For a given module ``instantiation`` (``NkModuleInstantiation``) of a
+   ## ``module`` (``NkModuleDecl``), find any unassigned, i.e. empty, parameters.
+   let parameter_assignments = find_first(instantiation, NkParameterValueAssignment)
+   if is_nil(parameter_assignments):
+      return
+
+   for assignment in walk_sons(parameter_assignments, NkNamedParameterAssignment):
+      let id_idx = find_first_index(assignment, NkIdentifier)
+      if id_idx < 0:
+         continue
+
+      let id = assignment[id_idx]
+      let expr = find_first(assignment, ExpressionTypes, id_idx + 1)
+      if is_nil(expr):
+         add(result, new_connection_error(CkUnassignedParameter, instantiation, id.identifier,
+                                          assignment))
 
 
 proc find_connection_errors*(g: Graph): seq[ConnectionError] =
@@ -168,6 +214,9 @@ proc find_connection_errors*(g: Graph): seq[ConnectionError] =
          let module = get_module(g, module_name.identifier.s)
          if is_nil(module):
             continue
+
+         add(result, find_missing_parameters(g, module.n, instantiation))
+         add(result, find_unassigned_parameters(g, module.n, instantiation))
 
          for instance in walk_sons(instantiation, NkModuleInstance):
             add(result, find_missing_ports(g, module.n, instance))
