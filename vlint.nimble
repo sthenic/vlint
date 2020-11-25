@@ -10,5 +10,5 @@ skip_dirs = @["tests"]
 
 # Dependencies
 requires "nim >= 1.4.0"
-requires "vparse >= 0.1.1"
-requires "vltoml >= 0.1.0"
+requires "vparse >= 0.3.0"
+requires "vltoml >= 0.2.0"
